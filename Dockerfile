@@ -11,11 +11,18 @@ WORKDIR /app
 # 复制编译好的二进制文件（由 GitHub Actions 或本地编译提供）
 COPY dist/apple-music-bridge /app/apple-music-bridge
 
-# 安装运行时依赖（ffmpeg、gpac、bento4）
+# 安装运行时依赖
 RUN apk add --no-cache \
     ffmpeg \
     gpac \
-    bento4
+    wget
+
+# 安装 mp4decrypt (Bento4)
+RUN wget -q "https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-639.x86_64-unknown-linux.zip" -O /tmp/bento4.zip && \
+    unzip -j /tmp/bento4.zip "Bento4-SDK-1-6-0-639.x86_64-unknown-linux/bin/mp4decrypt" -d /usr/local/bin/ && \
+    chmod +x /usr/local/bin/mp4decrypt && \
+    rm -f /tmp/bento4.zip && \
+    apk del wget
 
 # 下载并配置 downloader（根据架构）
 ARG TARGETARCH

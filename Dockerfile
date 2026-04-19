@@ -42,17 +42,11 @@ RUN set -eux; \
 # 复制源代码
 COPY . /app/
 
-# 安装 Python 依赖并编译二进制
-RUN pip3 install --break-system-packages -r requirements.txt && \
-    pip3 install --break-system-packages pyinstaller && \
-    pyinstaller --onefile \
-        --name apple-music-bridge \
-        --add-data "config.yaml:." \
-        --hidden-import=uvicorn \
-        --hidden-import=fastapi \
-        --hidden-import=sqlite3 \
-        main.py && \
-    rm -rf build *.spec __pycache__
+# 删除不需要的文件（downloader 压缩包）
+RUN rm -f /app/downloader-linux-x64.zip /app/downloader-mac-arm.zip
+
+# 安装 Python 依赖
+RUN pip3 install --break-system-packages -r requirements.txt
 
 # 下载并配置 downloader（根据架构）
 ARG TARGETARCH

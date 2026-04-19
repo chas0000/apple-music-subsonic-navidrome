@@ -47,7 +47,7 @@ fi
 echo "[INFO] Database ready"
 
 # ===============================
-# 启动主应用（apple-music-bridge 会调用 downloader）
+# 启动主应用
 # ===============================
 echo "[INFO] Starting Apple Music Bridge on port 8800..."
-exec /app/apple-music-bridge
+exec python3 /app/main.py

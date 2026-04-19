@@ -12,10 +12,12 @@ WORKDIR /app
 COPY dist/apple-music-bridge /app/apple-music-bridge
 
 # 安装运行时依赖
-RUN apk add --no-cache \
-    ffmpeg \
-    gpac \
-    wget
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+    apk update && \
+    apk add --no-cache \
+        ffmpeg \
+        gpac \
+        wget
 
 # 安装 mp4decrypt (Bento4)
 RUN wget -q "https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-639.x86_64-unknown-linux.zip" -O /tmp/bento4.zip && \

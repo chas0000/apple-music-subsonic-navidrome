@@ -36,6 +36,24 @@ RUN set -eux; \
 # 复制编译好的二进制文件（由 GitHub Actions 或本地编译提供）
 COPY dist/apple-music-bridge /app/apple-music-bridge
 
+# 下载并配置 downloader（根据架构）
+ARG TARGETARCH
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+        ARCH="amd64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        ARCH="arm64"; \
+    else \
+        ARCH="amd64"; \
+    fi && \
+    echo "Downloading downloader for $ARCH" && \
+    LATEST_URL=$(curl -s https://api.github.com/repos/chas0000/AMDL-docker/releases/latest | grep "browser_download_url.*amdl-${ARCH}.tar.gz" | cut -d '"' -f 4) && \
+    curl -L -o /tmp/downloader.tar.gz "$LATEST_URL" && \
+    tar -xzf /tmp/downloader.tar.gz -C /tmp/ && \
+    cp /tmp/amdl-${ARCH}/sdl /app/downloader && \
+    cp /tmp/amdl-${ARCH}/sky_config.yaml /app/sky_config.yaml && \
+    chmod +x /app/downloader && \
+    rm -rf /tmp/downloader.tar.gz /tmp/amdl-${ARCH}
+
 # 构建 GPAC 和 Bento4
 RUN set -eux; \
     mkdir -p /app/build; \
@@ -61,24 +79,6 @@ RUN set -eux; \
     rm -rf /app/build; \
     apt-get purge -y g++ make cmake git wget curl; \
     apt-get autoremove -y
-
-# 下载并配置 downloader（根据架构）
-ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "amd64" ]; then \
-        ARCH="amd64"; \
-    elif [ "$TARGETARCH" = "arm64" ]; then \
-        ARCH="arm64"; \
-    else \
-        ARCH="amd64"; \
-    fi && \
-    echo "Downloading downloader for $ARCH" && \
-    LATEST_URL=$(curl -s https://api.github.com/repos/chas0000/AMDL-docker/releases/latest | grep "browser_download_url.*amdl-${ARCH}.tar.gz" | cut -d '"' -f 4) && \
-    curl -L -o /tmp/downloader.tar.gz "$LATEST_URL" && \
-    tar -xzf /tmp/downloader.tar.gz -C /tmp/ && \
-    cp /tmp/amdl-${ARCH}/sdl /app/downloader && \
-    cp /tmp/amdl-${ARCH}/sky_config.yaml /app/sky_config.yaml && \
-    chmod +x /app/downloader && \
-    rm -rf /tmp/downloader.tar.gz /tmp/amdl-${ARCH}
 
 # 创建备份目录并备份配置文件
 RUN mkdir -p /app/backup && \

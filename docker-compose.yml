@@ -13,10 +13,8 @@ services:
       - ./config:/app/config
       # 挂载音乐存储目录
       - ./music:/app/music
-      # 挂载临时缓存目录
-      - ./temp_cache:/app/temp_cache
-      # 挂载数据库文件
-      - ./apple_music_bridge.db:/app/apple_music_bridge.db
+      # 使用命名卷持久化数据库（避免复制开销）
+      - db_data:/app/apple_music_bridge.db
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
@@ -26,3 +24,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+
+volumes:
+  db_data:
+    driver: local

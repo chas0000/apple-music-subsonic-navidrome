@@ -2,12 +2,11 @@ version: '3.8'
 
 services:
   apple-music-bridge:
-    build:
-      context: .
-      dockerfile: Dockerfile
     container_name: apple-music-bridge
-    ports:
-      - "8800:8800"
+    image: ghcr.io/chas0000/apple_navidrome:latest 
+    network_mode: host
+    #ports:
+    #  - "8800:8800"
     volumes:
       # 挂载配置目录（持久化配置文件）
       - ./config:/app/config

@@ -76,7 +76,8 @@ jobs:
         run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build-and-push.outputs.digest }}"
-          echo "${digest#*@}" > "/tmp/digests/${digest#*@}"
+          # 移除 sha256: 前缀，只保留哈希值作为文件名
+          echo "${digest#*@}" > "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
         uses: actions/upload-artifact@v4

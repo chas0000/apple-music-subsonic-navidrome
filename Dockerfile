@@ -1,19 +1,40 @@
-# 第一阶段：编译 GPAC 和 Bento4
-FROM debian:bookworm AS builder
+# 使用 Ubuntu 22.04 基础镜像
+FROM ubuntu:22.04
 
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    make \
-    cmake \
-    git \
-    wget \
-    curl \
-    libfreetype-dev \
-    libpng-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+# 设置工作目录
+WORKDIR /app
+
+# 安装基础依赖
+RUN set -eux; \
+    apt-get update || (sleep 5 && apt-get update); \
+    apt-get install -y --no-install-recommends \
+        wget \
+        curl \
+        ca-certificates \
+        git \
+        ffmpeg \
+        g++ \
+        make \
+        cmake \
+        zlib1g-dev \
+        coreutils \
+        unzip \
+    || (apt-get update && apt-get install -y --no-install-recommends \
+        wget \
+        curl \
+        ca-certificates \
+        git \
+        ffmpeg \
+        g++ \
+        make \
+        cmake \
+        zlib1g-dev \
+        coreutils \
+        unzip); \
+    rm -rf /var/lib/apt/lists/*
+
+# 复制编译好的二进制文件（由 GitHub Actions 或本地编译提供）
+COPY dist/apple-music-bridge /app/apple-music-bridge
 
 # 构建 GPAC 和 Bento4
 RUN set -eux; \
@@ -41,27 +62,6 @@ RUN set -eux; \
     apt-get purge -y g++ make cmake git wget curl; \
     apt-get autoremove -y
 
-# 第二阶段：最小化运行时镜像
-FROM debian:bookworm-slim
-
-# 从构建阶段复制 MP4Box 和 mp4decrypt
-COPY --from=builder /usr/local/bin/MP4Box /usr/local/bin/MP4Box
-COPY --from=builder /usr/local/bin/mp4box /usr/local/bin/mp4box
-COPY --from=builder /usr/local/bin/mp4decrypt /usr/local/bin/mp4decrypt
-COPY --from=builder /usr/lib/x86_64-linux-gnu/libgpac.so* /usr/lib/x86_64-linux-gnu/
-
-WORKDIR /app
-
-# 复制编译好的二进制文件（由 GitHub Actions 或本地编译提供）
-COPY dist/apple-music-bridge /app/apple-music-bridge
-
-# 安装运行时依赖（ffmpeg、curl、unzip）
-RUN apt-get update && apt-get install -y \
-    ffmpeg \
-    curl \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
-
 # 下载并配置 downloader（根据架构）
 ARG TARGETARCH
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
@@ -87,14 +87,12 @@ RUN mkdir -p /app/backup && \
 # 创建必要的目录
 RUN mkdir -p ./temp_cache ./music
 
-
 # 复制 entrypoint 脚本
 COPY entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
 # 暴露端口
 EXPOSE 8800
-EXPOSE 3000
 
 # 设置环境变量
 ENV PYTHONUNBUFFERED=1

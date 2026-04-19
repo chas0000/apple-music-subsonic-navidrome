@@ -1,22 +1,66 @@
-# 最小化运行时镜像（不需要Python，因为已打包为二进制）
+# 第一阶段：编译 GPAC 和 Bento4
+FROM debian:bookworm AS builder
+
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    cmake \
+    git \
+    wget \
+    curl \
+    libfreetype-dev \
+    libpng-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 构建 GPAC 和 Bento4
+RUN set -eux; \
+    mkdir -p /app/build; \
+    \
+    # Build GPAC
+    git clone --depth=1 https://github.com/gpac/gpac.git /app/build/gpac; \
+    cd /app/build/gpac; \
+    ./configure; \
+    make -j$(nproc); \
+    make install; \
+    MP4BOX_PATH=$(command -v MP4Box); \
+    if [ -n "$MP4BOX_PATH" ]; then ln -sf "$MP4BOX_PATH" "$(dirname "$MP4BOX_PATH")/mp4box"; fi; \
+    \
+    # Build Bento4
+    git clone --depth=1 https://github.com/axiomatic-systems/Bento4.git /app/build/Bento4; \
+    mkdir -p /app/build/Bento4/cmakebuild; \
+    cd /app/build/Bento4/cmakebuild; \
+    cmake -DCMAKE_BUILD_TYPE=Release ..; \
+    make -j$(nproc); \
+    mv ./mp4decrypt /usr/local/bin/mp4decrypt; \
+    \
+    # 清理
+    rm -rf /app/build; \
+    apt-get purge -y g++ make cmake git wget curl; \
+    apt-get autoremove -y
+
+# 第二阶段：最小化运行时镜像
 FROM debian:bookworm-slim
+
+# 从构建阶段复制 MP4Box 和 mp4decrypt
+COPY --from=builder /usr/local/bin/MP4Box /usr/local/bin/MP4Box
+COPY --from=builder /usr/local/bin/mp4box /usr/local/bin/mp4box
+COPY --from=builder /usr/local/bin/mp4decrypt /usr/local/bin/mp4decrypt
+COPY --from=builder /usr/lib/x86_64-linux-gnu/libgpac.so* /usr/lib/x86_64-linux-gnu/
 
 WORKDIR /app
 
 # 复制编译好的二进制文件（由 GitHub Actions 或本地编译提供）
 COPY dist/apple-music-bridge /app/apple-music-bridge
 
-# 安装运行时依赖
+# 安装运行时依赖（ffmpeg、curl、unzip）
 RUN apt-get update && apt-get install -y \
     ffmpeg \
-    gpac \
+    curl \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
-
-# 安装 mp4decrypt (Bento4)
-RUN wget -q "https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-639.x86_64-unknown-linux.zip" -O /tmp/bento4.zip && \
-    unzip -j /tmp/bento4.zip "Bento4-SDK-1-6-0-639.x86_64-unknown-linux/bin/mp4decrypt" -d /usr/local/bin/ && \
-    chmod +x /usr/local/bin/mp4decrypt && \
-    rm -f /tmp/bento4.zip
 
 # 下载并配置 downloader（根据架构）
 ARG TARGETARCH

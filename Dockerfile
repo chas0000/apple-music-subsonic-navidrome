@@ -4,7 +4,7 @@ FROM ubuntu:22.04
 # 设置工作目录
 WORKDIR /app
 
-# 安装基础依赖
+# 安装基础依赖和 Python
 RUN set -eux; \
     apt-get update || (sleep 5 && apt-get update); \
     apt-get install -y --no-install-recommends \
@@ -19,6 +19,9 @@ RUN set -eux; \
         zlib1g-dev \
         coreutils \
         unzip \
+        python3 \
+        python3-pip \
+        python3-venv \
     || (apt-get update && apt-get install -y --no-install-recommends \
         wget \
         curl \
@@ -30,11 +33,26 @@ RUN set -eux; \
         cmake \
         zlib1g-dev \
         coreutils \
-        unzip); \
+        unzip \
+        python3 \
+        python3-pip \
+        python3-venv); \
     rm -rf /var/lib/apt/lists/*
 
-# 复制编译好的二进制文件（由 GitHub Actions 或本地编译提供）
-COPY dist/apple-music-bridge /app/apple-music-bridge
+# 复制源代码
+COPY . /app/
+
+# 安装 Python 依赖并编译二进制
+RUN pip3 install --break-system-packages -r requirements.txt && \
+    pip3 install --break-system-packages pyinstaller && \
+    pyinstaller --onefile \
+        --name apple-music-bridge \
+        --add-data "config.yaml:." \
+        --hidden-import=uvicorn \
+        --hidden-import=fastapi \
+        --hidden-import=sqlite3 \
+        main.py && \
+    rm -rf build *.spec __pycache__
 
 # 下载并配置 downloader（根据架构）
 ARG TARGETARCH

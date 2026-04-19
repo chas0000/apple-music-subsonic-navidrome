@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  apple-music-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apple-music-bridge
+    ports:
+      - "8800:8800"
+    volumes:
+      # 挂载配置目录（持久化配置文件）
+      - ./config:/app/config
+      # 挂载音乐存储目录
+      - ./music:/app/music
+      # 挂载临时缓存目录
+      - ./temp_cache:/app/temp_cache
+      # 挂载数据库文件
+      - ./apple_music_bridge.db:/app/apple_music_bridge.db
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8800/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s

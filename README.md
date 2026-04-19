@@ -33,6 +33,54 @@ feishin 1.2.0 版本 （只适配这个版本的feishin）
 2. 箭头音乐
 ```
 # 🚀 部署与使用指南
+
+## 🐳 Docker 部署（推荐）
+
+### 快速开始
+```bash
+# 1. 克隆仓库
+git clone <repository-url>
+cd apple-music-subsonic-navidrome
+
+# 2. 配置 config.yaml（填入你的 media-user-token 等）
+# 编辑 config.yaml 文件
+
+# 3. 一键部署
+./deploy.sh
+# 或手动执行
+docker-compose up -d
+```
+
+### 从 GitHub Container Registry 拉取
+```bash
+# 拉取最新镜像
+docker pull ghcr.io/<username>/apple-music-subsonic-navidrome:latest
+
+# 运行容器
+docker run -d \
+  --name apple-music-bridge \
+  -p 8800:8800 \
+  -v $(pwd)/config.yaml:/app/config.yaml:ro \
+  -v $(pwd)/music:/app/music \
+  -v $(pwd)/temp_cache:/app/temp_cache \
+  ghcr.io/<username>/apple-music-subsonic-navidrome:latest
+```
+
+### 本地构建
+```bash
+# 构建镜像
+docker build -t apple-music-bridge:latest .
+
+# 运行容器
+docker-compose up -d
+```
+
+详细部署文档请查看 [DEPLOYMENT.md](DEPLOYMENT.md)
+
+---
+
+## 💻 传统部署方式
+
 ### 📂 核心目录结构如下：
 ```text
 /root/apple-bridge/

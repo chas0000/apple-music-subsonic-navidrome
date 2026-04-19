@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import time
 import json
@@ -6,7 +7,9 @@ import uuid
 from typing import List, Dict, Any
 
 class Database:
-    def __init__(self, db_path="apple_music_bridge.db"):
+    def __init__(self, db_path=None):
+        if db_path is None:
+            db_path = os.environ.get('DB_PATH', 'apple_music_bridge.db')
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self._init_db()

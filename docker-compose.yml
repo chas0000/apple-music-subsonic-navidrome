@@ -11,12 +11,13 @@ services:
     volumes:
       # 挂载配置目录（持久化配置文件）
       - ./config:/app/config
+      # 挂载数据目录（持久化数据库）
+      - ./data:/app/data
       # 挂载音乐存储目录
       - ./music:/app/music
-      # 使用命名卷持久化数据库（避免复制开销）
-      - db_data:/app/apple_music_bridge.db
     environment:
       - PYTHONUNBUFFERED=1
+      - DB_PATH=/app/data/apple_music_bridge.db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8800/docs"]
@@ -24,7 +25,3 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
-
-volumes:
-  db_data:
-    driver: local

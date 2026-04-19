@@ -20,14 +20,26 @@ for f in sky_config.yaml; do
     cp "/app/config/$f" "/app/$f"
 done
 
+# ===============================
+# 初始化 user.txt（如果不存在则创建空文件）
+# ===============================
+if [ ! -f "/app/config/user.txt" ]; then
+    echo "[INFO] Creating empty user.txt..."
+    touch /app/config/user.txt
+else
+    echo "[INFO] Using existing user.txt"
+fi
+cp /app/config/user.txt /app/user.txt
+
 echo "[INFO] Configuration files ready"
 
 # ===============================
 # 初始化数据库文件（如果不存在则创建）
 # ===============================
-if [ ! -f "/app/apple_music_bridge.db" ]; then
+mkdir -p /app/data
+if [ ! -f "/app/data/apple_music_bridge.db" ]; then
     echo "[INFO] Initializing database..."
-    touch /app/apple_music_bridge.db
+    touch /app/data/apple_music_bridge.db
 else
     echo "[INFO] Using existing database"
 fi

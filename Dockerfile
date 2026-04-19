@@ -1,10 +1,5 @@
-# 最小化运行时镜像
-FROM python:3.11-alpine
-
-# 安装基础依赖
-RUN apk add --no-cache \
-    curl \
-    unzip
+# 最小化运行时镜像（不需要Python，因为已打包为二进制）
+FROM debian:bookworm-slim
 
 WORKDIR /app
 
@@ -12,19 +7,16 @@ WORKDIR /app
 COPY dist/apple-music-bridge /app/apple-music-bridge
 
 # 安装运行时依赖
-RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
-    apk update && \
-    apk add --no-cache \
-        ffmpeg \
-        gpac \
-        wget
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    gpac \
+    && rm -rf /var/lib/apt/lists/*
 
 # 安装 mp4decrypt (Bento4)
 RUN wget -q "https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-639.x86_64-unknown-linux.zip" -O /tmp/bento4.zip && \
     unzip -j /tmp/bento4.zip "Bento4-SDK-1-6-0-639.x86_64-unknown-linux/bin/mp4decrypt" -d /usr/local/bin/ && \
     chmod +x /usr/local/bin/mp4decrypt && \
-    rm -f /tmp/bento4.zip && \
-    apk del wget
+    rm -f /tmp/bento4.zip
 
 # 下载并配置 downloader（根据架构）
 ARG TARGETARCH

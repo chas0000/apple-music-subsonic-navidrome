@@ -45,8 +45,13 @@ COPY . /app/
 # 删除不需要的文件（downloader 压缩包）
 RUN rm -f /app/downloader-linux-x64.zip /app/downloader-mac-arm.zip
 
-# 安装 Python 依赖
-RUN pip3 install --break-system-packages -r requirements.txt
+# 创建虚拟环境并安装依赖
+RUN python3 -m venv /opt/venv && \
+    /opt/venv/bin/pip install --upgrade pip && \
+    /opt/venv/bin/pip install -r requirements.txt
+
+# 设置环境变量使用虚拟环境
+ENV PATH="/opt/venv/bin:$PATH"
 
 # 下载并配置 downloader（根据架构）
 ARG TARGETARCH

@@ -50,7 +50,9 @@ class AppleMusicAPI:
             js_content_res = requests.get(js_url, timeout=15)
             js_content_res.raise_for_status()
             
-            token_match = re.search(r'"(eyJhbGciOi[^"]+)"', js_content_res.text)
+            token_match = re.search(
+    r'eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+', js_content_res.text
+)
             if not token_match: raise Exception("JS文件中未匹配到Token")
 
             new_token = token_match.group(1)
